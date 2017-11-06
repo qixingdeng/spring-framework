@@ -16,14 +16,6 @@
 
 package org.springframework.context.annotation;
 
-import java.lang.annotation.Annotation;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -44,6 +36,13 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import java.lang.annotation.Annotation;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Parser for the {@code <context:component-scan/>} element.
@@ -81,19 +80,24 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	@Override
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
 		String basePackage = element.getAttribute(BASE_PACKAGE_ATTRIBUTE);
+		//猜测这里把.转成/ nonono
 		basePackage = parserContext.getReaderContext().getEnvironment().resolvePlaceholders(basePackage);
 		String[] basePackages = StringUtils.tokenizeToStringArray(basePackage,
 				ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
 
 		// Actually scan for bean definitions and register them.
+		//配置扫描器 use-default-filters=true 支持@Component;支持include-filter,exclude-filter标签
 		ClassPathBeanDefinitionScanner scanner = configureScanner(parserContext, element);
+		//扫描基本包，过滤带有@Component@Service@Repository@Controller的Resource,并封装成BeanDefination对象
 		Set<BeanDefinitionHolder> beanDefinitions = scanner.doScan(basePackages);
+		//
 		registerComponents(parserContext.getReaderContext(), beanDefinitions, element);
 
 		return null;
 	}
 
 	protected ClassPathBeanDefinitionScanner configureScanner(ParserContext parserContext, Element element) {
+		//这就是<context:component-scan>标签中的use-default-filters属性的默认值
 		boolean useDefaultFilters = true;
 		if (element.hasAttribute(USE_DEFAULT_FILTERS_ATTRIBUTE)) {
 			useDefaultFilters = Boolean.valueOf(element.getAttribute(USE_DEFAULT_FILTERS_ATTRIBUTE));
@@ -122,6 +126,7 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 			parserContext.getReaderContext().error(ex.getMessage(), parserContext.extractSource(element), ex.getCause());
 		}
 
+		//对use-default-filters=false的支持
 		parseTypeFilters(element, scanner, parserContext);
 
 		return scanner;

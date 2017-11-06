@@ -16,18 +16,8 @@
 
 package org.springframework.context.support;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -41,6 +31,15 @@ import org.springframework.core.OrderComparator;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
 import org.springframework.lang.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Delegate for AbstractApplicationContext's post-processor handling.
@@ -59,9 +58,11 @@ class PostProcessorRegistrationDelegate {
 		if (beanFactory instanceof BeanDefinitionRegistry) {
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
 			List<BeanFactoryPostProcessor> regularPostProcessors = new LinkedList<>();
+			//BeanDefinitionRegistryPostProcessor是BeanFactoryPostProcessor的子接口
 			List<BeanDefinitionRegistryPostProcessor> registryPostProcessors =
 					new LinkedList<>();
 
+			//这块逻辑不会走，测试代码会走
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryPostProcessor =
@@ -123,8 +124,8 @@ class PostProcessorRegistrationDelegate {
 			}
 
 			// Now, invoke the postProcessBeanFactory callback of all processors handled so far.
-			invokeBeanFactoryPostProcessors(registryPostProcessors, beanFactory);
-			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
+			invokeBeanFactoryPostProcessors(registryPostProcessors, beanFactory);//调用父类的postProcessBeanFactory方法
+			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);//调用父类的postProcessBeanFactory方法
 		}
 
 		else {
@@ -134,6 +135,7 @@ class PostProcessorRegistrationDelegate {
 
 		// Do not initialize FactoryBeans here: We need to leave all regular beans
 		// uninitialized to let the bean factory post-processors apply to them!
+		//获取父类BeanFactoryPostProcessor的实例，其中包括了上面子类的实例，需要过滤掉
 		String[] postProcessorNames =
 				beanFactory.getBeanNamesForType(BeanFactoryPostProcessor.class, true, false);
 
@@ -143,7 +145,7 @@ class PostProcessorRegistrationDelegate {
 		List<String> orderedPostProcessorNames = new ArrayList<>();
 		List<String> nonOrderedPostProcessorNames = new ArrayList<>();
 		for (String ppName : postProcessorNames) {
-			if (processedBeans.contains(ppName)) {
+			if (processedBeans.contains(ppName)) {//过滤掉子类处理过的对象
 				// skip - already processed in first phase above
 			}
 			else if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {

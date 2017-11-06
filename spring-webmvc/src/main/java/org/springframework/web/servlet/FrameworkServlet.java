@@ -16,17 +16,6 @@
 
 package org.springframework.web.servlet;
 
-import java.io.IOException;
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -64,6 +53,17 @@ import org.springframework.web.context.support.XmlWebApplicationContext;
 import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.util.NestedServletException;
 import org.springframework.web.util.WebUtils;
+
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
+import java.io.IOException;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * Base servlet for Spring's web framework. Provides integration with
@@ -496,8 +496,9 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		long startTime = System.currentTimeMillis();
 
 		try {
+			//重点
 			this.webApplicationContext = initWebApplicationContext();
-			initFrameworkServlet();
+			initFrameworkServlet();//空方法，没有子类实现
 		}
 		catch (ServletException ex) {
 			this.logger.error("Context initialization failed", ex);
@@ -542,6 +543,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 						// the root application context (if any; may be null) as the parent
 						cwac.setParent(rootContext);
 					}
+					//重要
 					configureAndRefreshWebApplicationContext(cwac);
 				}
 			}
@@ -562,6 +564,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 			// Either the context is not a ConfigurableApplicationContext with refresh
 			// support or the context injected at construction time had already been
 			// refreshed -> trigger initial onRefresh manually here.
+			//重要
 			onRefresh(wac);
 		}
 
@@ -659,21 +662,21 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		}
 
 		wac.setServletContext(getServletContext());
-		wac.setServletConfig(getServletConfig());
+		wac.setServletConfig(getServletConfig());//servlet的配置
 		wac.setNamespace(getNamespace());
 		wac.addApplicationListener(new SourceFilteringListener(wac, new ContextRefreshListener()));
 
 		// The wac environment's #initPropertySources will be called in any case when the context
 		// is refreshed; do it eagerly here to ensure servlet property sources are in place for
 		// use in any post-processing or initialization that occurs below prior to #refresh
-		ConfigurableEnvironment env = wac.getEnvironment();
+		ConfigurableEnvironment env = wac.getEnvironment();//对应profile配置
 		if (env instanceof ConfigurableWebEnvironment) {
 			((ConfigurableWebEnvironment) env).initPropertySources(getServletContext(), getServletConfig());
 		}
 
-		postProcessWebApplicationContext(wac);
+		postProcessWebApplicationContext(wac);//空方法
 		applyInitializers(wac);
-		wac.refresh();
+		wac.refresh();//重点
 	}
 
 	/**
